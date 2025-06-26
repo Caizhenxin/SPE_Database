@@ -91,7 +91,8 @@ library(readr)
 library(stringr)
 
 # 读取已处理的数据
-data <- read_csv("Processed_Data_for_SDE.csv", show_col_types = FALSE)
+data <- read_csv("../3_Code/Processed_Data_Filtered_with_logRT.csv", show_col_types = FALSE)
+# data <- read_csv("Processed_Data_for_SDE.csv", show_col_types = FALSE)
 #data <- read_csv("Processed_Data.csv", show_col_types = FALSE)
 
 # 处理 Source 变量，提取文章信息（支持两种格式）
@@ -126,6 +127,247 @@ print("- Experiment_Summary.csv（每篇文章的实验及被试数量）")
 print("- Article_Summary.csv（每篇文章的实验数和总被试数）")
 
 ```
+
+# 论文数量、实验数量、被试数_v2
+```{r}
+library(dplyr)
+library(readr)
+library(stringr)
+
+# 读取已处理的数据
+data <- read_csv("../3_Code/Processed_Data_Filtered_with_logRT.csv", show_col_types = FALSE)
+
+# 处理 Source 变量，提取文章、实验编号、被试ID
+data <- data %>%
+  mutate(
+    Article = case_when(
+      str_detect(Source, "^[^_]+_\\d{4}_[^_]+_Exp\\d+") ~ str_extract(Source, "^[^_]+_\\d{4}_[^_]+"),
+      str_detect(Source, "^[^_]+_\\d{4}_Exp\\d+") ~ str_extract(Source, "^[^_]+_\\d{4}")
+    ),
+    Experiment = str_extract(Source, "Exp\\d+"),
+    Subject_ID = str_extract(Subject, "[^_]+$")
+  )
+
+# === 1. 输出每个被试一行的信息 ===
+subject_info <- data %>%
+  select(Source, Subject, Age, Gender) %>%
+  distinct() %>%
+  arrange(Source, Subject)
+
+write_csv(subject_info, "Subject_information.csv")
+
+# === 2. 统计每个实验的被试数量 ===
+summary_table <- data %>%
+  group_by(Article, Experiment) %>%
+  summarise(Num_Subjects = n_distinct(Subject_ID), .groups = "drop") %>%
+  arrange(Article, Experiment)
+
+write_csv(summary_table, "Experiment_Summary.csv")
+
+# === 3. 统计每篇文章的实验数 & 总被试数 ===
+article_summary <- summary_table %>%
+  group_by(Article) %>%
+  summarise(Num_Experiments = n_distinct(Experiment),
+            Total_Subjects = sum(Num_Subjects),
+            .groups = "drop")
+
+write_csv(article_summary, "Article_Summary.csv")
+```
+
+
+```{r}
+# 1. 年龄分布直方图
+p1 <- ggplot(subject_info, aes(x = Age)) +
+  geom_histogram(binwidth = 2, fill = "#69b3a2", color = "black", boundary = 0) +
+  theme_classic(base_size = 14) +
+  labs(title = "Age Distribution", x = "Age", y = "Count")
+  p1
+```
+
+## 性别
+```{r}
+# 2. 性别比例条形图
+p2 <- df %>%
+  count(Gender) %>%
+  ggplot(aes(x = Gender, y = n, fill = Gender)) +
+  geom_bar(stat = "identity", color = "black") +
+  theme_classic(base_size = 14) +
+  scale_fill_manual(values = c("#FF9999", "#99CCFF", "#BBBBBB")) +
+  labs(title = "Gender Distribution", x = "Gender", y = "Count") +
+  theme(legend.position = "none")
+  p2
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+# 读取被试信息
+df <- read.csv("Subject_information.csv")
+
+# 汇总性别数量
+gender_summary <- df %>%
+  filter(!is.na(Gender)) %>%
+  group_by(Gender) %>%
+  summarise(Count = n()) %>%
+  mutate(Percent = Count / sum(Count) * 100,
+         Label = paste0(Gender, "\n", round(Percent, 1), "%"))
+
+ggplot(gender_summary, aes(x = "", y = Count, fill = Gender)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  theme_void(base_size = 14) +
+  geom_text(aes(label = Label), position = position_stack(vjust = 0.5), size = 5) +
+  scale_fill_manual(values = c("#66c2a5", "#fc8d62", "#8da0cb")) +  # 自定义颜色
+  labs(title = "Gender Distribution of Participants") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+
+```
+
+
+## Stim Type
+```{r}
+library(ggplot2)
+library(dplyr)
+df_info <- read_csv("Dataset_inf.csv", show_col_types = FALSE)
+
+df_info %>%
+  count(Stim_Type) %>%
+  ggplot(aes(x = reorder(Stim_Type, n), y = n)) +
+  geom_bar(stat = "identity", fill = "#66c2a5") +
+  coord_flip() +
+  theme_minimal(base_size = 14) +
+  labs(title = "Stimulus Types in SPE Studies", x = "Stimulus Type", y = "Number of Studies")
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(readr)
+
+# 1. 读取数据
+df <- read_csv("Dataset_inf.csv", show_col_types = FALSE)
+
+# 2. 统计 Stim_Type 数量
+stim_summary <- df %>%
+  filter(!is.na(Stim_Type)) %>%
+  group_by(Stim_Type) %>%
+  summarise(Count = n()) %>%
+  mutate(Percent = Count / sum(Count) * 100,
+         Label = paste0(Stim_Type, "\n", round(Percent, 1), "%"))
+
+# 3. 绘制饼图
+ggplot(stim_summary, aes(x = "", y = Count, fill = Stim_Type)) +
+  geom_col(width = 1, color = "white") +
+  scale_fill_manual(values = c(
+  "#fc8d62", "#66c2a5",  "#8da0cb", "#e78ac3", "#a6d854", "#ffd92f"
+)) +
+  coord_polar(theta = "y") +
+  theme_void(base_size = 14) +
+  #geom_text(aes(label = Label), position = position_stack(vjust = 0.5), size = 4.5) +
+  #scale_fill_brewer(palette = "Pastel1") +
+  labs(title = "Stimulus Type Distribution in SPE Studies") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(readr)
+
+# 1. 读取数据
+df <- read_csv("Dataset_inf.csv", show_col_types = FALSE)
+
+# 2. 统计 Stim_Type 数量
+stim_summary <- df %>%
+  filter(!is.na(Stim_Type)) %>%
+  group_by(Stim_Type) %>%
+  summarise(Count = n()) %>%
+  mutate(
+    Percent = Count / sum(Count) * 100,
+    Stim_Type = factor(Stim_Type),  # 保持原始顺序
+    Label = paste0(round(Percent, 1), "%")
+  )
+
+# 3. 绘制 Poster 风格的环形饼图（不在图中显示 Stim_Type）
+ggplot(stim_summary, aes(x = 2, y = Count, fill = Stim_Type)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  xlim(0.5, 2.5) +  # 环形图效果
+  theme_void(base_size = 14) +
+  scale_fill_manual(values = c(
+  "#66c2a5", "#fc8d62", "#8da0cb", "#e78ac3", "#a6d854", "#ffd92f"
+)) +  # ✅ 你的颜色方案
+  labs(
+    title = "Stimulus Type Distribution in SPE Studies",
+    subtitle = "Across all experiments",
+    fill = "Stimulus Type"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    plot.subtitle = element_text(hjust = 0.5, size = 12),
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size = 12),
+    legend.position = "right"
+  )
+
+
+```
+
+
+
+## 世界地图
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidygeocoder)
+library(readr)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sf)
+library(stringi)
+library(stringr)   # 👈 加上这个！
+
+# 读取数据并强制使用 UTF-8
+df <- read_csv("Dataset_inf.csv", locale = locale(encoding = "UTF-8"), show_col_types = FALSE)
+
+# 清洗 Country 和 City 字段
+df_clean <- df %>%
+  filter(!is.na(Country), !is.na(City)) %>%
+  mutate(
+    Country = stri_trans_general(Country, "Latin-ASCII"),
+    City = stri_trans_general(City, "Latin-ASCII"),
+    City = str_replace_all(City, "[^[:alnum:][:space:]]", ""),  # 💡 此处需要 stringr
+    full_address = paste(City, Country, sep = ", ")
+  ) %>%
+  distinct(full_address, .keep_all = TRUE)
+
+# 地理编码
+df_geo <- df_clean %>%
+  geocode(address = full_address, method = "arcgis", lat = latitude, long = longitude)
+
+
+# 世界地图
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+# 可视化
+ggplot(data = world) +
+  geom_sf(fill = "gray95", color = "white") +
+  geom_point(data = df_geo, 
+             aes(x = longitude, y = latitude), 
+             color = "#1f78b4", size = 3, alpha = 0.8) +
+  theme_minimal(base_size = 14) +
+  labs(title = "Global Distribution of SPE Studies",
+       subtitle = "Each point represents a study site",
+       x = NULL, y = NULL) +
+  theme(
+    panel.grid = element_blank(),
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, hjust = 0.5)
+  )
+
+```
+
 
 ## Pic1
 ```{r}
