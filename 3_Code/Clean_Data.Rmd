@@ -3685,15 +3685,15 @@ df[[48]] <- read.csv(
     ACC = ACC,
   ) %>%
   dplyr::mutate(
-    Matching = case_when(
-      Shape == Label ~ "Matching",
-      Shape != Label ~ "Nonmatching"),
     RT_sec = RT_ms / 1000,
     Label_Identity = case_when(
       Label_Identity == "You" ~ "Self",
       Label_Identity == "Friend" ~ "Close",
       Label_Identity == "Stranger" ~ "Stranger",
     ),
+    Matching = case_when(
+      Shape == Label_Identity ~ "Matching",
+      Shape != Label_Identity ~ "Nonmatching"),
   ) %>%
   dplyr::mutate(
     Subject = as.numeric(Subject),
