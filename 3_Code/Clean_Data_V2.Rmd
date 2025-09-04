@@ -62,7 +62,7 @@ read.mat <- function(list) {
     list_mat <- list[[i]]
     
     # 提取人口统计学变量
-     <- list_mat$
+    Age <- list_mat$age
     han <- list_mat$han
     sex <- list_mat$sex
     
@@ -152,6 +152,7 @@ read.mat <- function(list) {
 library(tidyr)
 library(dplyr)
 library(stringr)
+library(showtext)
 ```
 
 ## Initial Data.Frame List
@@ -365,7 +366,6 @@ df[[4]] <- read.csv(
     ),
     Session = Session,
     Mood = mood,
-    Gender = Sex,
     RT_ms = as.numeric(respond3.RT),
     RT_sec = RT_ms / 1000,
     ACC = as.numeric(respond3.ACC),
@@ -389,7 +389,7 @@ df[[4]] <- read.csv(
     ACC = as.numeric(ACC),
   ) %>%
   dplyr::select(
-    Subject, Gender, 
+    Subject, 
     Matching, Origin_Identity, English_Identity, Standarlized_Identity, Mood, Arouse, Valence, Session,  
     RT_ms, RT_sec, ACC
   ) %>%
@@ -533,7 +533,7 @@ df[[7]] <- read.csv(
     ACC = as.numeric(MT4.ACC),
   ) %>%
     dplyr::select(
-    Subject, Gender, Condition, RT_ms, RT_sec, ACC
+    Subject, Condition, RT_ms, RT_sec, ACC
   ) %>%
   dplyr::arrange(
     Subject
@@ -660,7 +660,7 @@ df[[9]] <- read.csv(
     ACC = as.numeric(ACC),
   ) %>%
   dplyr::select(
-    Subject, Block, Trial, Face_Gender, Shape, Label,
+    Subject, Block, Trial, Face_Gender, Label,
     Matching, Label_Identity, Origin_Identity, English_Identity, Standarlized_Identity, 
     RT_ms, RT_sec, ACC, 
   ) %>%
@@ -2759,22 +2759,22 @@ df[[40]] <- read.csv(
     RT_ms = match03.RT,
     ACC = match03.ACC,
   ) %>%
-  #   dplyr::rowwise() %>% #使用原始代码清理
-  #     dplyr::mutate(
-  #       Shape_Identity = case_when(
-  #         Shape == S1 ~ ID1, # Shape 属于 S1，则使用 ID1
-  #         Shape == S2 ~ ID2, # Shape 属于 S2，则使用 ID2
-  #         TRUE ~ NA_character_ # 如果都不匹配，返回 NA
-  #       )
-  # ) %>%
-  # dplyr::ungroup()%>%
-  Two_Shape_Identity_Tools(   #使用函数清理
-    shape_col = "Shape", 
-    id1_col = "ID1", 
-    id2_col = "ID2", 
-    s1_col = "S1", 
-    s2_col = "S2"
-  )%>%
+    dplyr::rowwise() %>% #使用原始代码清理
+      dplyr::mutate(
+        Shape_Identity = case_when(
+          Shape == S1 ~ ID1, # Shape 属于 S1，则使用 ID1
+          Shape == S2 ~ ID2, # Shape 属于 S2，则使用 ID2
+          TRUE ~ NA_character_ # 如果都不匹配，返回 NA
+        )
+  ) %>%
+  dplyr::ungroup()%>%
+  # Two_Shape_Identity_Tools(   #使用函数清理
+  #   shape_col = "Shape", 
+  #   id1_col = "ID1", 
+  #   id2_col = "ID2", 
+  #   s1_col = "S1", 
+  #   s2_col = "S2"
+  # )%>%
   dplyr::mutate(
     Matching = case_when(
       Matching == "match" ~ "Matching",
@@ -4719,5 +4719,116 @@ names(df)[69] <- "Sun_2025_Exp1"
 summary(df[[69]])
 write.csv(x = df[[69]], file = "../1_Clean_Data/Sun_2025/Sun_2025_Exp1_Clean.csv",row.names = FALSE)
 ```
+
+
+# Pan_2025
+## Experiment 1 (Identity = 3)
+"Self", "Friend", "Other" → "Self", "Close", "Stranger"
+
+############### Import packages ##############
+```{r}
+library(tidyverse)
+library(showtext)
+showtext.auto()
+
+# Define functions
+jspsycsv2df <- function(path) {
+  df <- read_csv(path)
+  df$subj_idx <- jsonlite::fromJSON(df$response[5])$Q0 %>% as.numeric()
+  df$gender <- jsonlite::fromJSON(df$response[6])
+  df$year <- jsonlite::fromJSON(df$response[7])$Q0
+  df$education <- jsonlite::fromJSON(df$response[8])$Q0
+  df$dist <- df$view_dist_mm[9]
+  
+  df2 <- df %>%
+    dplyr::select(
+      subj_idx, year, education, dist, trial_type, image, word, target,
+      valence, matchness, exp_condition, response, key_press, correct_response,
+      correct, rt
+    )
+  
+  df3 <- df2 %>%
+    dplyr::filter(trial_type == "psychophysics")
+  
+  return(df3)
+}
+
+data_preprocessing <- function() {
+  files <- list.files(
+    "../2_Raw_Data/Pan_2025",
+    pattern = "csv", full.names = TRUE, recursive = TRUE
+  )
+  all <- purrr::map_dfr(.x = files, .f = ~jspsycsv2df(.x))
+  
+  data <- all %>%
+    dplyr::filter(exp_condition == "Formal")
+  
+  data2 <- data %>%
+    dplyr::filter(rt != "null")
+  data2$rt <- as.numeric(data2$rt) / 1000
+  data2 <- data2 %>% mutate(ACC = as.numeric(correct))
+  data2$valence <- factor(data2$valence, labels = c("他人", "朋友", "自我"))
+  data2$valence <- factor(data2$valence, levels = c("自我", "朋友", "他人"))
+  data2$word <- factor(data2$word, labels = c("他人", "朋友", "自我"))
+  data2$word <- factor(data2$word, levels = c("自我", "朋友", "他人"))
+  data2 <- data2 %>% mutate(
+    target_identity = if_else(target == "Word", word, valence),
+    test_identity = if_else(target == "Word", valence, word)
+  )
+  
+  return(data2)
+}
+
+# Process data and assign to df[[70]]
+pan_data <- data_preprocessing()
+```
+
+```{r}
+df[[70]] <- pan_data %>%
+  dplyr::mutate(
+    Subject = as.numeric(subj_idx),
+    Shape = image,
+    Label = word,
+    Matching = case_when(
+      matchness == "Match" ~ "Matching",
+      matchness == "Mismatch" ~ "Nonmatching",
+    ),
+    Origin_Identity = valence,
+    English_Identity = case_when(
+      as.character(valence) == "自我" ~ "Self",
+      as.character(valence) == "朋友" ~ "Friend",
+      as.character(valence) == "他人" ~ "Other"
+    ),
+    Standarlized_Identity = case_when(
+      English_Identity == "Self" ~ "Self",
+      English_Identity == "Friend" ~ "Close",
+      English_Identity == "Other" ~ "Stranger"
+    ),
+    Response = response,
+    RT_sec = rt,
+    RT_ms = RT_sec * 1000,
+    ACC = ACC,
+    Stim_Type = target,
+    Phase = exp_condition,
+  ) %>%
+  dplyr::select(
+    Subject,
+    Shape, Label, Matching, Stim_Type, Phase,
+    Origin_Identity, English_Identity, Standarlized_Identity,
+    Response, RT_ms, RT_sec, ACC
+  ) %>%
+  dplyr::arrange(Subject)
+
+names(df)[70] <- "Pan_2025_Exp1"
+summary(df[[70]])
+write.csv(x = df[[70]], file = "../1_Clean_Data/Pan_2025/Pan_2025_Exp1_Clean.csv", row.names = FALSE)
+
+# Clean up functions
+rm(data_preprocessing, jspsycsv2df, pan_data)
+```
+
+
+
+
 
 
