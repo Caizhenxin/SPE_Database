@@ -25,7 +25,7 @@ library(readr)
 
 ## 设置数据路径
 dataPath <- "../1_Clean_Data"
-data_files <- list.files(path = dataPath, pattern = "\\.csv$", full.names = TRUE, recursive = TRUE)
+data_files <- list.files(path = dataPath, pattern = ".*_Clean\\.csv$", full.names = TRUE, recursive = TRUE)
 
 ## 需要排除的文件夹
 exclude_folders <- c("Bukowski_2021_AP", "Golubickis_2021_AP", 
@@ -34,6 +34,74 @@ exclude_folders <- c("Bukowski_2021_AP", "Golubickis_2021_AP",
                      "Wang_2016_EPHPP","Liang_2022_HBM","Hobbs_2021_PM",
                      "Lee_2023_Cognition","Orellana-Corrales_2021_APP",
                      "Kirk_2025_BJP","Svensson_2023_QJEP")
+
+## 过滤掉不需要的文件
+data_files <- data_files[!grepl(paste(exclude_folders, collapse = "|"), data_files)]
+
+## 预分配存储变量（列表存储数据）
+results_list <- list()
+
+## 计数器
+counter <- 1
+
+## 读取 CSV 文件并处理数据
+for (i in seq_along(data_files)) {
+  file_name <- basename(data_files[i])  # 提取文件名（假设文件名代表文章名称）
+  
+  Data <- read_csv(data_files[i], show_col_types = FALSE) %>%
+    mutate(across(where(is.character), as.character))  # 确保字符变量类型一致
+  
+  # 确保数据包含所需变量
+  if (all(c("RT_ms", "ACC", "Label", "Standarlized_Identity", "Subject", "Matching") %in% names(Data))) {
+    
+    # 生成唯一标识每篇文章的 Subject ID，并添加 Source 变量
+    Data <- Data %>%
+      mutate(
+        Subject = paste0(file_name, "_", Subject),
+        Source = file_name  # **新增变量，标记来源文章**
+      )
+    
+    # 过滤 RT 在合理范围内的行
+    Data <- Data %>%
+      filter(RT_ms > 200 & RT_ms < 5000, ACC %in% c(0, 1))  # 过滤异常值
+
+    # **存入列表**
+    results_list[[counter]] <- Data %>%
+      select(Source, Subject, Matching, Label, Standarlized_Identity, RT_ms, ACC)  # **保留 Source 变量**
+    
+    counter <- counter + 1
+  }
+  print(paste('完成数据集', i, '处理'))
+}
+
+# **合并所有数据**
+results <- bind_rows(results_list)
+
+# **检查合并后的数据**
+print("数据处理完成，已存入 `results` 变量")
+
+# **输出数据到 CSV**
+# write.csv(results, "Processed_Data.csv", row.names = FALSE)
+
+save(df,results,results_list,file = "Share_Data.RData", compress = TRUE)
+load("Share_Data.RData")
+```
+
+```{r}
+library(dplyr)
+library(readr)
+
+## 设置数据路径
+dataPath <- "../1_Clean_Data"
+data_files <- list.files(path = dataPath, pattern = ".*_Clean\\.csv$", full.names = TRUE, recursive = TRUE)
+
+## 需要排除的文件夹
+exclude_folders <- c("Bukowski_2021_AP", "Golubickis_2021_AP", 
+                     "Hobbs_2023_PM", "Mcivor_2020_EJN", 
+                     "Orellana-Corrales_2021_EP", "Svensson_2021_PR", 
+                     "Wang_2016_EPHPP","Liang_2022_HBM","Hobbs_2021_PM",
+                     "Lee_2023_Cognition","Orellana-Corrales_2021_APP",
+                     "Kirk_2025_BJP","Svensson_2023_QJEP","Sun_2025","Pan_2025")
 
 ## 过滤掉不需要的文件
 data_files <- data_files[!grepl(paste(exclude_folders, collapse = "|"), data_files)]
@@ -63,7 +131,7 @@ for (i in seq_along(data_files)) {
     
     # 过滤 RT 在合理范围内的行
     Data <- Data %>%
-      filter(RT_ms > 10 & RT_ms < 5000, ACC %in% c(0, 1))  # 过滤异常值
+      filter(RT_ms > 200 & RT_ms < 5000, ACC %in% c(0, 1))  # 过滤异常值
 
     # **存入列表**
     results_list[[counter]] <- Data %>%
@@ -77,12 +145,152 @@ for (i in seq_along(data_files)) {
 # **合并所有数据**
 results <- bind_rows(results_list)
 
+# 排除被试存在某个Identity正确率低于50%
+subjects_to_exclude <- results %>%
+  group_by(Subject, Standarlized_Identity) %>%
+  summarise(mean_acc = mean(ACC, na.rm = TRUE), .groups = "drop") %>%
+  filter(mean_acc < 0.50) %>%  # 修改为50%阈值
+  distinct(Subject)
+
+# 排除这些被试
+results_filtered <- results %>%
+  anti_join(subjects_to_exclude, by = "Subject")
+
 # **检查合并后的数据**
-print("数据处理完成，已存入 `results` 变量")
+print("数据处理完成，已存入 `results_filtered` 变量")
+
+# **输出数据到 CSV**
+write.csv(results_filtered, "Processed_Data_Filtered.csv", row.names = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(readr)
+
+## 设置数据路径
+dataPath <- "../1_Clean_Data"
+data_files <- list.files(path = dataPath, pattern = ".*_Clean\\.csv$", full.names = TRUE, recursive = TRUE)
+
+## 需要排除的文件夹
+exclude_folders <- c("Bukowski_2021_AP", "Golubickis_2021_AP", 
+                     "Hobbs_2023_PM", "Mcivor_2020_EJN", 
+                     "Orellana-Corrales_2021_EP", "Svensson_2021_PR", 
+                     "Wang_2016_EPHPP","Liang_2022_HBM","Hobbs_2021_PM",
+                     "Lee_2023_Cognition","Orellana-Corrales_2021_APP",
+                     "Kirk_2025_BJP","Svensson_2023_QJEP")
+
+## 过滤掉不需要的文件
+data_files <- data_files[!grepl(paste(exclude_folders, collapse = "|"), data_files)]
+
+## 预分配存储变量（列表存储数据）
+results_list <- list()
+
+## 读取 CSV 文件并处理数据
+for (i in seq_along(data_files)) {
+  file_name <- basename(data_files[i])
+  
+  # 读取时指定列类型，确保 Label 列为字符型
+  Data <- read_csv(data_files[i], show_col_types = FALSE,
+                   col_types = cols(Label = col_character())) %>%
+    mutate(across(where(is.character), as.character))
+  
+  # 确保数据包含所需变量
+  required_cols <- c("RT_ms", "ACC", "Label_Identity", "Standarlized_Identity", "Subject", "Matching")
+  if (all(required_cols %in% names(Data))) {
+    
+    Data <- Data %>%
+      mutate(
+        Subject = paste0(file_name, "_", Subject),
+        Source = file_name
+      ) %>%
+      filter(RT_ms > 200 & RT_ms < 5000, ACC %in% c(0, 1)) %>%
+      select(Source, Subject, Matching, Label_Identity, Standarlized_Identity, RT_ms, ACC)
+    
+    results_list[[length(results_list) + 1]] <- Data
+  }
+  print(paste('完成数据集', i, '处理'))
+}
+
+# 合并所有数据
+results <- bind_rows(results_list)
+
+# 检查合并后的数据
+glimpse(results)
+
+# 保存数据
+save(results, results_list, file = "Share_Data.RData")
 
 # **输出数据到 CSV**
 write.csv(results, "Processed_Data.csv", row.names = FALSE)
 ```
+
+```{r}
+library(dplyr)
+library(readr)
+
+## 设置数据路径
+dataPath <- "../1_Clean_Data"
+data_files <- list.files(path = dataPath, pattern = ".*_Clean\\.csv$", full.names = TRUE, recursive = TRUE)
+
+## 需要排除的文件夹
+exclude_folders <- c("Bukowski_2021_AP", "Golubickis_2021_AP", 
+                     "Hobbs_2023_PM", "Mcivor_2020_EJN", 
+                     "Orellana-Corrales_2021_EP", "Svensson_2021_PR", 
+                     "Wang_2016_EPHPP","Liang_2022_HBM","Hobbs_2021_PM",
+                     "Lee_2023_Cognition","Orellana-Corrales_2021_APP",
+                     "Kirk_2025_BJP","Svensson_2023_QJEP")
+
+## 过滤掉不需要的文件
+data_files <- data_files[!grepl(paste(exclude_folders, collapse = "|"), data_files)]
+
+## 预分配存储变量（列表存储数据）
+results_list <- list()
+
+## 读取 CSV 文件并处理数据
+for (i in seq_along(data_files)) {
+  file_name <- basename(data_files[i])
+  
+  # 读取时指定列类型，确保 Label 列为字符型
+  Data <- read_csv(data_files[i], show_col_types = FALSE,
+                   col_types = cols(Label = col_character())) %>% 
+    mutate(across(where(is.character), as.character))
+  
+  # 确保数据包含所需变量
+  required_cols <- c("RT_ms", "ACC", "Label", "Standarlized_Identity", "Subject", "Matching")
+  if (all(required_cols %in% names(Data))) {
+    
+    # 添加 Label_Identity 列（如果不存在则用 NA 填充）
+    if (!"Label_Identity" %in% names(Data)) {
+      Data$Label_Identity <- NA_character_
+    }
+    
+    Data <- Data %>%
+      mutate(
+        Subject = paste0(file_name, "_", Subject),
+        Source = file_name
+      ) %>%
+      filter(RT_ms > 200 & RT_ms < 5000, ACC %in% c(0, 1)) %>%
+      select(Source, Subject, Matching, Label, Label_Identity, Standarlized_Identity, RT_ms, ACC)
+    
+    results_list[[length(results_list) + 1]] <- Data
+  }
+  print(paste('完成数据集', i, '处理'))
+}
+
+# 合并所有数据
+results <- bind_rows(results_list)
+
+# **输出数据到 CSV**
+write.csv(results, "Processed_Data.csv", row.names = FALSE)
+
+# 检查合并后的数据
+glimpse(results)
+
+# 保存数据
+save(results, results_list, file = "Share_Data.RData")
+```
+
+
 
 # 论文数量、实验数量、被试数
 ```{r}
@@ -174,7 +382,7 @@ article_summary <- summary_table %>%
 write_csv(article_summary, "Article_Summary.csv")
 ```
 
-
+## 年龄
 ```{r}
 # 1. 年龄分布直方图
 p1 <- ggplot(subject_info, aes(x = Age)) +
