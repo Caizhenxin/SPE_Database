@@ -2367,3 +2367,856 @@ ggsave("Cohens_d_with_CI_APA_Combined.tiff", dpi = 300, width = 7, height = 5, u
 
 
 
+###Mismatch
+```{r}
+data <- read.csv("Processed_Data.csv")
+
+data$Standarlized_Identity <- as.factor(data$Standarlized_Identity)
+
+## 排除被试存在某个Identity正确率低于50%
+
+subjects_to_exclude <- data %>%
+  group_by(Subject, Standarlized_Identity) %>%
+  summarise(mean_acc = mean(ACC, na.rm = TRUE), .groups = "drop") %>%
+  filter(mean_acc < 0.5) %>%
+  distinct(Subject)
+
+# 排除这些被试
+data_filtered <- data %>%
+  anti_join(subjects_to_exclude, by = "Subject")
+
+unique(data$Source)
+
+levels(data$Standarlized_Identity)
+
+data_mis <- filter(data_filtered, Matching == 'Nomatching', RT_ms >= 200)
+data_RT_mis <- filter(data_mis, ACC == 1, RT_ms >= 200, RT_ms <= 5000)
+
+data_RT_mis$log_RT_ms <- log(data_RT_mis$RT_ms)
+```
+
+```{r}
+# 读取数据
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(effsize)
+
+set.seed(990102)
+
+# =============================================================================
+# 数据预处理函数
+# =============================================================================
+
+# 通用的被试筛选函数
+filter_valid_subjects <- function(data, identity_column) {
+  subject_summary <- data %>%
+    group_by(Subject) %>%
+    summarise(
+      unique_identities = list(unique(!!sym(identity_column)[!is.na(!!sym(identity_column))])),
+      identity_count = length(unique(!!sym(identity_column)[!is.na(!!sym(identity_column))])),
+      has_self = any(!!sym(identity_column) == "Self", na.rm = TRUE),
+      has_stranger = any(!!sym(identity_column) == "Stranger", na.rm = TRUE),
+      total_trials = n(),
+      .groups = 'drop'
+    ) %>%
+    mutate(
+      meets_criteria = has_self & has_stranger & identity_count >= 3
+    )
+  
+  valid_subjects <- subject_summary$Subject[subject_summary$meets_criteria]
+  print(paste("保留的被试数量:", length(valid_subjects)))
+  
+  return(valid_subjects)
+}
+
+# 通用的数据处理函数
+process_data <- function(data, analysis_type = "Shape") {
+  
+  if(analysis_type == "Shape") {
+    identity_col <- "Standarlized_Identity" 
+    label_col <- "Label_Identity"
+  } else {
+    identity_col <- "Label_Identity"
+    label_col <- "Standarlized_Identity"
+  }
+  
+  # 筛选被试
+  valid_subjects <- filter_valid_subjects(data, identity_col)
+  
+  # 处理数据
+  data_processed <- data %>%
+    filter(Subject %in% valid_subjects) %>%
+    mutate(
+      Primary = case_when(
+        !!sym(identity_col) == "Self" ~ "Self",
+        !!sym(identity_col) == "Stranger" ~ "Stranger", 
+        TRUE ~ "Other"
+      ),
+      Secondary = case_when(
+        !!sym(label_col) == "Self" ~ "Self",
+        !!sym(label_col) == "Stranger" ~ "Stranger",
+        TRUE ~ "Other"
+      )
+    ) %>%
+    filter(
+      Primary == "Self" |
+        (Primary == "Stranger" & Secondary != "Self") |
+        Primary == "Other"
+    )
+  
+  return(data_processed)
+}
+
+# =============================================================================
+# Cohen's d 计算函数
+# =============================================================================
+
+calculate_cohens_d <- function(data, analysis_type = "Shape", measure = "RT", min_trials = 2) {
+  
+  # RT分析需要log转换
+  if(measure == "RT") {
+    data$log_RT_ms <- log(data$RT_ms)
+    dependent_var <- "log_RT_ms"
+  } else {
+    dependent_var <- "ACC"
+    min_trials <- 5  # ACC需要更多试次
+  }
+  
+  # 筛选数据
+  data_analysis <- data %>%
+    filter(Primary %in% c("Self", "Stranger"))
+  
+  # 检查被试数据完整性
+  subject_check <- data_analysis %>%
+    group_by(Subject) %>%
+    summarise(
+      has_self = any(Primary == "Self"),
+      has_stranger = any(Primary == "Stranger"), 
+      n_self = sum(Primary == "Self"),
+      n_stranger = sum(Primary == "Stranger"),
+      .groups = 'drop'
+    ) %>%
+    mutate(
+      complete_data = has_self & has_stranger & n_self >= min_trials & n_stranger >= min_trials
+    )
+  
+  complete_subjects <- subject_check$Subject[subject_check$complete_data]
+  print(paste("参与Cohen's d计算的被试数量:", length(complete_subjects)))
+  
+  # 计算Cohen's d
+  cohens_d_results <- data.frame()
+  
+  for(subject_id in complete_subjects) {
+    subject_data <- data_analysis[data_analysis$Subject == subject_id, ]
+    
+    self_data <- subject_data[subject_data$Primary == "Self", dependent_var]
+    stranger_data <- subject_data[subject_data$Primary == "Stranger", dependent_var]
+    
+    # 移除NA值
+    self_data <- self_data[!is.na(self_data)]
+    stranger_data <- stranger_data[!is.na(stranger_data)]
+    
+    tryCatch({
+      # RT: Stranger - Self; ACC: Self - Stranger
+      if(measure == "RT") {
+        cohens_d_value <- cohen.d(stranger_data, self_data)$estimate
+      } else {
+        cohens_d_value <- cohen.d(self_data, stranger_data)$estimate  
+      }
+      
+      cohens_d_results <- rbind(cohens_d_results, data.frame(
+        Subject = subject_id,
+        Cohens_d = cohens_d_value,
+        n_self = length(self_data),
+        n_stranger = length(stranger_data),
+        mean_self = mean(self_data),
+        mean_stranger = mean(stranger_data),
+        stringsAsFactors = FALSE
+      ))
+      
+    }, error = function(e) {
+      warning(paste("被试", subject_id, "计算失败"))
+    })
+  }
+  
+  if(nrow(cohens_d_results) > 0) {
+    mean_cohens_d <- mean(cohens_d_results$Cohens_d, na.rm = TRUE)
+    print(paste(analysis_type, measure, "Cohen's d平均值:", round(mean_cohens_d, 4)))
+  }
+  
+  return(list(
+    individual_results = cohens_d_results,
+    mean_cohens_d = mean_cohens_d
+  ))
+}
+
+# =============================================================================
+# Bootstrap分析函数
+# =============================================================================
+
+bootstrap_analysis <- function(cohens_d_result, condition_name, B = 5000) {
+  
+  if(is.list(cohens_d_result) && "individual_results" %in% names(cohens_d_result)) {
+    cohend_data <- cohens_d_result$individual_results
+  } else {
+    cohend_data <- cohens_d_result
+  }
+  
+  cohend_clean <- cohend_data[!is.na(cohend_data$Cohens_d), ]
+  
+  if(nrow(cohend_clean) == 0) return(NULL)
+  
+  # 生成样本量序列
+  max_n <- nrow(cohend_clean)
+  if(max_n <= 10) {
+    sample_sizes <- 2:max_n
+  } else {
+    sample_sizes <- seq(from = 2, to = max_n, by = max(1, floor(max_n/15)))
+    sample_sizes <- c(sample_sizes, max_n)
+  }
+  sample_sizes <- unique(sort(sample_sizes))
+  
+  # Bootstrap分析
+  set.seed(123)
+  shuffled_data <- cohend_clean[sample(nrow(cohend_clean)), ]
+  
+  boot_results <- list()
+  
+  for (n in sample_sizes) {
+    if (n > nrow(shuffled_data)) next
+    
+    selected_cohend <- shuffled_data$Cohens_d[1:n]
+    if (length(selected_cohend) < 2) next
+    
+    d_values <- replicate(B, {
+      boot_sample <- sample(selected_cohend, size = length(selected_cohend), replace = TRUE)
+      mean(boot_sample, na.rm = TRUE)
+    })
+    
+    boot_results[[length(boot_results) + 1]] <- data.frame(
+      SampleSize = n,
+      Identity = condition_name,
+      Mean_d = mean(d_values, na.rm = TRUE),
+      SE = sd(d_values, na.rm = TRUE),
+      CI_lower = quantile(d_values, 0.025, na.rm = TRUE),
+      CI_upper = quantile(d_values, 0.975, na.rm = TRUE),
+      stringsAsFactors = FALSE
+    )
+  }
+  
+  return(bind_rows(boot_results))
+}
+
+# 合并Bootstrap结果
+combined_bootstrap_analysis <- function(shape_result, label_result, B = 5000) {
+  
+  shape_bootstrap <- bootstrap_analysis(shape_result, "Shape", B)
+  label_bootstrap <- bootstrap_analysis(label_result, "Label", B)
+  
+  combined_results <- bind_rows(shape_bootstrap, label_bootstrap)
+  
+  if(nrow(combined_results) > 0) {
+    combined_results$is_significant <- combined_results$CI_lower > 0
+  }
+  
+  return(combined_results)
+}
+
+# =============================================================================
+# 绘图函数
+# =============================================================================
+
+create_bootstrap_plot <- function(combined_results, measure = "RT") {
+  
+  identity_colors <- c("Shape" = "#2E86AB", "Label" = "#A23B72")
+  
+  # 根据测量类型设置标题和Y轴标签
+  if(measure == "RT") {
+    y_label <- "Cohen's d (Stranger - Self)"
+    title <- "Bootstrap Power Analysis of Reaction Time"
+  } else {
+    y_label <- "Cohen's d (Self - Stranger)"  
+    title <- "Bootstrap Power Analysis of Accuracy"
+  }
+  
+  p <- ggplot(combined_results, aes(x = SampleSize, y = Mean_d, color = Identity, fill = Identity)) +
+    geom_ribbon(aes(ymin = CI_lower, ymax = CI_upper), alpha = 0.2, color = NA) +
+    geom_line(size = 1.2) +
+    geom_point(size = 2.5) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.7) +
+    scale_color_manual(values = identity_colors) +
+    scale_fill_manual(values = identity_colors) +
+    scale_y_continuous(
+      expand = expansion(mult = c(0.02, 0.02)),
+      breaks = scales::pretty_breaks(n = 8)
+    ) +
+    scale_x_continuous(
+      expand = expansion(mult = c(0.01, 0.01)),
+      breaks = scales::pretty_breaks(n = 8)
+    ) +
+    labs(
+      x = "Sample Size (Number of Participants)",
+      y = y_label,
+      color = "Social Identity Category",
+      fill = "Social Identity Category",
+      title = title
+    ) +
+    theme_minimal() +
+    theme(
+      legend.position = "top",
+      legend.title = element_text(size = 25, face = "bold", family = "Times New Roman"),
+      legend.text = element_text(size = 25, family = "Times New Roman"),
+      axis.title.x = element_text(size = 35, face = "bold", color = "black", 
+                                  family = "Times New Roman", margin = margin(t = 20)),
+      axis.title.y = element_text(size = 35, color = "black", face = "bold", 
+                                  family = "Times New Roman", angle = 90, margin = margin(r = 20)),
+      axis.text = element_text(size = 35, color = "black", family = "Times New Roman"),
+      axis.line = element_line(color = "black", size = 0.7),
+      axis.ticks = element_line(color = "black", size = 0.7),
+      panel.grid = element_blank(),
+      panel.background = element_rect(fill = "white", color = NA),
+      plot.background = element_rect(fill = "white", color = NA),
+      plot.title = element_text(size = 30, hjust = 0.5, family = "Times New Roman")
+    )
+  
+  return(p)
+}
+
+# =============================================================================
+# 主分析流程
+# =============================================================================
+
+run_complete_analysis <- function(data_filtered, data_rt_mis, save_plots = TRUE) {
+  
+  print("=== 开始完整的RT和ACC分析 ===")
+  
+  # RT分析
+  print("\n第一步：反应时间分析")
+  rt_shape_data <- process_data(data_rt_mis, "Shape")  
+  rt_label_data <- process_data(data_rt_mis, "Label")
+  
+  rt_shape_cohens <- calculate_cohens_d(rt_shape_data, "Shape", "RT")
+  rt_label_cohens <- calculate_cohens_d(rt_label_data, "Label", "RT") 
+  
+  rt_bootstrap <- combined_bootstrap_analysis(rt_shape_cohens, rt_label_cohens, B = 5000)
+  rt_plot <- create_bootstrap_plot(rt_bootstrap, "RT")
+  
+  # ACC分析  
+  print("\n第二步：准确率分析")
+  acc_shape_data <- process_data(data_filtered, "Shape")
+  acc_label_data <- process_data(data_filtered, "Label")
+  
+  acc_shape_cohens <- calculate_cohens_d(acc_shape_data, "Shape", "ACC")
+  acc_label_cohens <- calculate_cohens_d(acc_label_data, "Label", "ACC")
+  
+  acc_bootstrap <- combined_bootstrap_analysis(acc_shape_cohens, acc_label_cohens, B = 5000)
+  acc_plot <- create_bootstrap_plot(acc_bootstrap, "ACC")
+  
+  # 显示图形
+  print("\n第三步：显示结果")
+  print("反应时间图:")
+  print(rt_plot)
+  cat("\n按回车键查看准确率图...")
+  readline()
+  print("准确率图:")
+  print(acc_plot)
+  
+  # 保存图形
+  if(save_plots) {
+    ggsave("Bootstrap_RT_Analysis.pdf", rt_plot, width = 20, height = 10, device = "pdf")
+    ggsave("Bootstrap_ACC_Analysis.pdf", acc_plot, width = 20, height = 10, device = "pdf")
+    print("\n图形已保存为PDF文件")
+  }
+  
+  # 结果总结
+  print("\n=== 分析完成 ===")
+  print(paste("RT Shape Cohen's d平均值:", round(rt_shape_cohens$mean_cohens_d, 4)))
+  print(paste("RT Label Cohen's d平均值:", round(rt_label_cohens$mean_cohens_d, 4)))
+  print(paste("ACC Shape Cohen's d平均值:", round(acc_shape_cohens$mean_cohens_d, 4)))
+  print(paste("ACC Label Cohen's d平均值:", round(acc_label_cohens$mean_cohens_d, 4)))
+  
+  return(list(
+    rt_plot = rt_plot,
+    acc_plot = acc_plot,
+    rt_bootstrap = rt_bootstrap,
+    acc_bootstrap = acc_bootstrap,
+    rt_shape_cohens = rt_shape_cohens,
+    rt_label_cohens = rt_label_cohens,
+    acc_shape_cohens = acc_shape_cohens,
+    acc_label_cohens = acc_label_cohens
+  ))
+}
+
+# =============================================================================
+# 使用方法
+# =============================================================================
+
+print("=== 精简版RT和ACC分析代码已准备就绪 ===")
+print("\n数据准备:")
+print("1. data_filtered: 包含所有试次的数据(用于ACC分析)")
+print("2. data_rt_mis: 只包含正确试次的数据(用于RT分析)")
+print("\n运行分析:")
+print("results <- run_complete_analysis(data_filtered, data_rt_mis)")
+print("\n快速使用:")
+
+# 数据预处理
+data_mis <- filter(data_filtered, Matching == 'Nonmatching', RT_ms >= 200, RT_ms <= 5000)
+data_RT_mis <- filter(data_mis, ACC == 1)
+data_RT_mis$log_RT_ms <- log(data_RT_mis$RT_ms)
+
+# 运行完整分析
+results <- run_complete_analysis(data_mis, data_RT_mis)
+```
+
+```{r}
+# =============================================================================
+# 数据预处理函数
+# =============================================================================
+
+# 通用的被试筛选函数
+filter_valid_subjects <- function(data, identity_column) {
+  
+  # 使用标准的dplyr语法，避免!!sym()的问题
+  subject_summary <- data %>%
+    group_by(Subject) %>%
+    summarise(
+      unique_identities = if(identity_column == "Standarlized_Identity") {
+        list(unique(Standarlized_Identity[!is.na(Standarlized_Identity)]))
+      } else {
+        list(unique(Label_Identity[!is.na(Label_Identity)]))
+      },
+      identity_count = if(identity_column == "Standarlized_Identity") {
+        length(unique(Standarlized_Identity[!is.na(Standarlized_Identity)]))
+      } else {
+        length(unique(Label_Identity[!is.na(Label_Identity)]))
+      },
+      has_self = if(identity_column == "Standarlized_Identity") {
+        any(Standarlized_Identity == "Self", na.rm = TRUE)
+      } else {
+        any(Label_Identity == "Self", na.rm = TRUE)
+      },
+      has_stranger = if(identity_column == "Standarlized_Identity") {
+        any(Standarlized_Identity == "Stranger", na.rm = TRUE)
+      } else {
+        any(Label_Identity == "Stranger", na.rm = TRUE)
+      },
+      total_trials = n(),
+      .groups = 'drop'
+    ) %>%
+    mutate(
+      meets_criteria = has_self & has_stranger & identity_count >= 3
+    )
+  
+  valid_subjects <- subject_summary$Subject[subject_summary$meets_criteria]
+  print(paste("保留的被试数量:", length(valid_subjects)))
+  
+  return(valid_subjects)
+}
+
+# 通用的数据处理函数
+process_data <- function(data, analysis_type = "Shape") {
+  
+  # 筛选被试
+  if(analysis_type == "Shape") {
+    valid_subjects <- filter_valid_subjects(data, "Standarlized_Identity")
+  } else {
+    valid_subjects <- filter_valid_subjects(data, "Label_Identity")
+  }
+  
+  # 处理数据
+  if(analysis_type == "Shape") {
+    data_processed <- data %>%
+      filter(Subject %in% valid_subjects) %>%
+      mutate(
+        Primary = case_when(
+          Standarlized_Identity == "Self" ~ "Self",
+          Standarlized_Identity == "Stranger" ~ "Stranger", 
+          TRUE ~ "Other"
+        ),
+        Secondary = case_when(
+          Label_Identity == "Self" ~ "Self",
+          Label_Identity == "Stranger" ~ "Stranger",
+          TRUE ~ "Other"
+        )
+      ) %>%
+      filter(
+        Primary == "Self" |
+          (Primary == "Stranger" & Secondary != "Self") |
+          Primary == "Other"
+      )
+  } else {
+    data_processed <- data %>%
+      filter(Subject %in% valid_subjects) %>%
+      mutate(
+        Primary = case_when(
+          Label_Identity == "Self" ~ "Self",
+          Label_Identity == "Stranger" ~ "Stranger", 
+          TRUE ~ "Other"
+        ),
+        Secondary = case_when(
+          Standarlized_Identity == "Self" ~ "Self",
+          Standarlized_Identity == "Stranger" ~ "Stranger",
+          TRUE ~ "Other"
+        )
+      ) %>%
+      filter(
+        Primary == "Self" |
+          (Primary == "Stranger" & Secondary != "Self") |
+          Primary == "Other"
+      )
+  }
+  
+  return(data_processed)
+}
+
+# =============================================================================
+# Cohen's d 计算函数
+# =============================================================================
+
+calculate_cohens_d <- function(data, analysis_type = "Shape", measure = "RT", min_trials = 2) {
+  
+  # RT分析需要log转换
+  if(measure == "RT") {
+    if(!"log_RT_ms" %in% names(data)) {
+      data$log_RT_ms <- log(data$RT_ms)
+    }
+    dependent_var <- "log_RT_ms"
+  } else {
+    dependent_var <- "ACC"
+    min_trials <- 5  # ACC需要更多试次
+  }
+  
+  # 筛选数据
+  data_analysis <- data %>%
+    filter(Primary %in% c("Self", "Stranger"))
+  
+  # 检查被试数据完整性
+  subject_check <- data_analysis %>%
+    group_by(Subject) %>%
+    summarise(
+      has_self = any(Primary == "Self"),
+      has_stranger = any(Primary == "Stranger"), 
+      n_self = sum(Primary == "Self"),
+      n_stranger = sum(Primary == "Stranger"),
+      .groups = 'drop'
+    ) %>%
+    mutate(
+      complete_data = has_self & has_stranger & n_self >= min_trials & n_stranger >= min_trials
+    )
+  
+  complete_subjects <- subject_check$Subject[subject_check$complete_data]
+  print(paste("参与Cohen's d计算的被试数量:", length(complete_subjects)))
+  
+  if(length(complete_subjects) == 0) {
+    warning("没有被试满足条件！")
+    return(list(individual_results = data.frame(), mean_cohens_d = NA))
+  }
+  
+  # 计算Cohen's d
+  cohens_d_results <- data.frame()
+  
+  for(subject_id in complete_subjects) {
+    subject_data <- data_analysis[data_analysis$Subject == subject_id, ]
+    
+    self_data <- subject_data[subject_data$Primary == "Self", dependent_var]
+    stranger_data <- subject_data[subject_data$Primary == "Stranger", dependent_var]
+    
+    # 移除NA值
+    self_data <- self_data[!is.na(self_data)]
+    stranger_data <- stranger_data[!is.na(stranger_data)]
+    
+    tryCatch({
+      # RT: Stranger - Self; ACC: Self - Stranger
+      if(measure == "RT") {
+        cohens_d_value <- cohen.d(stranger_data, self_data)$estimate
+      } else {
+        cohens_d_value <- cohen.d(self_data, stranger_data)$estimate  
+      }
+      
+      cohens_d_results <- rbind(cohens_d_results, data.frame(
+        Subject = subject_id,
+        Cohens_d = cohens_d_value,
+        n_self = length(self_data),
+        n_stranger = length(stranger_data),
+        mean_self = mean(self_data),
+        mean_stranger = mean(stranger_data),
+        stringsAsFactors = FALSE
+      ))
+      
+    }, error = function(e) {
+      warning(paste("被试", subject_id, "计算失败:", e$message))
+    })
+  }
+  
+  if(nrow(cohens_d_results) > 0) {
+    mean_cohens_d <- mean(cohens_d_results$Cohens_d, na.rm = TRUE)
+    print(paste(analysis_type, measure, "Cohen's d平均值:", round(mean_cohens_d, 4)))
+  } else {
+    mean_cohens_d <- NA
+    print(paste(analysis_type, measure, "没有成功计算Cohen's d"))
+  }
+  
+  return(list(
+    individual_results = cohens_d_results,
+    mean_cohens_d = mean_cohens_d
+  ))
+}
+
+# =============================================================================
+# Bootstrap分析函数
+# =============================================================================
+
+bootstrap_analysis <- function(cohens_d_result, condition_name, B = 5000) {
+  
+  if(is.list(cohens_d_result) && "individual_results" %in% names(cohens_d_result)) {
+    cohend_data <- cohens_d_result$individual_results
+  } else {
+    cohend_data <- cohens_d_result
+  }
+  
+  if(is.null(cohend_data) || nrow(cohend_data) == 0) {
+    warning(paste("没有", condition_name, "的Cohen's d数据"))
+    return(NULL)
+  }
+  
+  cohend_clean <- cohend_data[!is.na(cohend_data$Cohens_d), ]
+  
+  if(nrow(cohend_clean) == 0) {
+    warning(paste(condition_name, "没有有效的Cohen's d值"))
+    return(NULL)
+  }
+  
+  # 生成样本量序列
+  max_n <- nrow(cohend_clean)
+  if(max_n <= 10) {
+    sample_sizes <- 2:max_n
+  } else {
+    sample_sizes <- seq(from = 2, to = max_n, by = max(1, floor(max_n/15)))
+    sample_sizes <- c(sample_sizes, max_n)
+  }
+  sample_sizes <- unique(sort(sample_sizes))
+  
+  # Bootstrap分析
+  set.seed(123)
+  shuffled_data <- cohend_clean[sample(nrow(cohend_clean)), ]
+  
+  boot_results <- list()
+  
+  for (n in sample_sizes) {
+    if (n > nrow(shuffled_data)) next
+    
+    selected_cohend <- shuffled_data$Cohens_d[1:n]
+    if (length(selected_cohend) < 2) next
+    
+    d_values <- replicate(B, {
+      boot_sample <- sample(selected_cohend, size = length(selected_cohend), replace = TRUE)
+      mean(boot_sample, na.rm = TRUE)
+    })
+    
+    boot_results[[length(boot_results) + 1]] <- data.frame(
+      SampleSize = n,
+      Identity = condition_name,
+      Mean_d = mean(d_values, na.rm = TRUE),
+      SE = sd(d_values, na.rm = TRUE),
+      CI_lower = quantile(d_values, 0.025, na.rm = TRUE),
+      CI_upper = quantile(d_values, 0.975, na.rm = TRUE),
+      stringsAsFactors = FALSE
+    )
+  }
+  
+  if(length(boot_results) > 0) {
+    return(bind_rows(boot_results))
+  } else {
+    return(NULL)
+  }
+}
+
+# 合并Bootstrap结果
+combined_bootstrap_analysis <- function(shape_result, label_result, B = 5000) {
+  
+  shape_bootstrap <- bootstrap_analysis(shape_result, "Shape", B)
+  label_bootstrap <- bootstrap_analysis(label_result, "Label", B)
+  
+  # 合并有效结果
+  valid_results <- list()
+  if(!is.null(shape_bootstrap)) valid_results <- c(valid_results, list(shape_bootstrap))
+  if(!is.null(label_bootstrap)) valid_results <- c(valid_results, list(label_bootstrap))
+  
+  if(length(valid_results) == 0) {
+    warning("没有有效的Bootstrap结果")
+    return(NULL)
+  }
+  
+  combined_results <- bind_rows(valid_results)
+  
+  if(nrow(combined_results) > 0) {
+    combined_results$is_significant <- combined_results$CI_lower > 0
+  }
+  
+  return(combined_results)
+}
+
+# =============================================================================
+# 绘图函数
+# =============================================================================
+
+create_bootstrap_plot <- function(combined_results, measure = "RT") {
+  
+  if(is.null(combined_results) || nrow(combined_results) == 0) {
+    print("没有数据可绘图")
+    return(NULL)
+  }
+  
+  identity_colors <- c("Shape" = "#2E86AB", "Label" = "#A23B72")
+  
+  # 根据测量类型设置标题和Y轴标签
+  if(measure == "RT") {
+    y_label <- "Cohen's d (Stranger - Self)"
+    title <- "Bootstrap Power Analysis of Reaction Time"
+  } else {
+    y_label <- "Cohen's d (Self - Stranger)"  
+    title <- "Bootstrap Power Analysis of Accuracy"
+  }
+  
+  p <- ggplot(combined_results, aes(x = SampleSize, y = Mean_d, color = Identity, fill = Identity)) +
+    geom_ribbon(aes(ymin = CI_lower, ymax = CI_upper), alpha = 0.2, color = NA) +
+    geom_line(size = 1.2) +
+    geom_point(size = 2.5) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", alpha = 0.7) +
+    scale_color_manual(values = identity_colors) +
+    scale_fill_manual(values = identity_colors) +
+    scale_y_continuous(
+      expand = expansion(mult = c(0.02, 0.02)),
+      breaks = scales::pretty_breaks(n = 8)
+    ) +
+    scale_x_continuous(
+      expand = expansion(mult = c(0.01, 0.01)),
+      breaks = scales::pretty_breaks(n = 8)
+    ) +
+    labs(
+      x = "Sample Size (Number of Participants)",
+      y = y_label,
+      color = "Social Identity Category",
+      fill = "Social Identity Category",
+      title = title
+    ) +
+    theme_minimal() +
+    theme(
+      legend.position = "top",
+      legend.title = element_text(size = 25, face = "bold", family = "Times New Roman"),
+      legend.text = element_text(size = 25, family = "Times New Roman"),
+      axis.title.x = element_text(size = 35, face = "bold", color = "black", 
+                                  family = "Times New Roman", margin = margin(t = 20)),
+      axis.title.y = element_text(size = 35, color = "black", face = "bold", 
+                                  family = "Times New Roman", angle = 90, margin = margin(r = 20)),
+      axis.text = element_text(size = 35, color = "black", family = "Times New Roman"),
+      axis.line = element_line(color = "black", size = 0.7),
+      axis.ticks = element_line(color = "black", size = 0.7),
+      panel.grid = element_blank(),
+      panel.background = element_rect(fill = "white", color = NA),
+      plot.background = element_rect(fill = "white", color = NA),
+      plot.title = element_text(size = 30, hjust = 0.5, family = "Times New Roman")
+    )
+  
+  return(p)
+}
+
+# =============================================================================
+# 主分析流程
+# =============================================================================
+
+run_complete_analysis <- function(data_filtered, data_rt_mis, save_plots = TRUE) {
+  
+  print("=== 开始完整的RT和ACC分析 ===")
+  
+  # RT分析
+  print("\n第一步：反应时间分析")
+  print("处理Shape数据...")
+  rt_shape_data <- process_data(data_rt_mis, "Shape")  
+  print("处理Label数据...")
+  rt_label_data <- process_data(data_rt_mis, "Label")
+  
+  print("计算RT Cohen's d...")
+  rt_shape_cohens <- calculate_cohens_d(rt_shape_data, "Shape", "RT")
+  rt_label_cohens <- calculate_cohens_d(rt_label_data, "Label", "RT") 
+  
+  print("RT Bootstrap分析...")
+  rt_bootstrap <- combined_bootstrap_analysis(rt_shape_cohens, rt_label_cohens, B = 5000)
+  rt_plot <- create_bootstrap_plot(rt_bootstrap, "RT")
+  
+  # ACC分析  
+  print("\n第二步：准确率分析")
+  print("处理ACC Shape数据...")
+  acc_shape_data <- process_data(data_filtered, "Shape")
+  print("处理ACC Label数据...")
+  acc_label_data <- process_data(data_filtered, "Label")
+  
+  print("计算ACC Cohen's d...")
+  acc_shape_cohens <- calculate_cohens_d(acc_shape_data, "Shape", "ACC")
+  acc_label_cohens <- calculate_cohens_d(acc_label_data, "Label", "ACC")
+  
+  print("ACC Bootstrap分析...")
+  acc_bootstrap <- combined_bootstrap_analysis(acc_shape_cohens, acc_label_cohens, B = 5000)
+  acc_plot <- create_bootstrap_plot(acc_bootstrap, "ACC")
+  
+  # 显示图形
+  print("\n第三步：显示结果")
+  if(!is.null(rt_plot)) {
+    print("反应时间图:")
+    print(rt_plot)
+  } else {
+    print("RT图生成失败")
+  }
+  
+  if(!is.null(acc_plot)) {
+    print("准确率图:")
+    print(acc_plot)
+  } else {
+    print("ACC图生成失败")
+  }
+  
+  # 保存图形
+  if(save_plots) {
+    if(!is.null(rt_plot)) {
+      ggsave("Bootstrap_RT_Analysis.pdf", rt_plot, width = 20, height = 10, device = "pdf")
+      print("RT图已保存为PDF")
+    }
+    if(!is.null(acc_plot)) {
+      ggsave("Bootstrap_ACC_Analysis.pdf", acc_plot, width = 20, height = 10, device = "pdf")
+      print("ACC图已保存为PDF")
+    }
+  }
+  
+  # 结果总结
+  print("\n=== 分析完成 ===")
+  if(!is.na(rt_shape_cohens$mean_cohens_d)) print(paste("RT Shape Cohen's d平均值:", round(rt_shape_cohens$mean_cohens_d, 4)))
+  if(!is.na(rt_label_cohens$mean_cohens_d)) print(paste("RT Label Cohen's d平均值:", round(rt_label_cohens$mean_cohens_d, 4)))
+  if(!is.na(acc_shape_cohens$mean_cohens_d)) print(paste("ACC Shape Cohen's d平均值:", round(acc_shape_cohens$mean_cohens_d, 4)))
+  if(!is.na(acc_label_cohens$mean_cohens_d)) print(paste("ACC Label Cohen's d平均值:", round(acc_label_cohens$mean_cohens_d, 4)))
+  
+  return(list(
+    rt_plot = rt_plot,
+    acc_plot = acc_plot,
+    rt_bootstrap = rt_bootstrap,
+    acc_bootstrap = acc_bootstrap,
+    rt_shape_cohens = rt_shape_cohens,
+    rt_label_cohens = rt_label_cohens,
+    acc_shape_cohens = acc_shape_cohens,
+    acc_label_cohens = acc_label_cohens
+  ))
+}
+
+# =============================================================================
+# 数据预处理和运行
+# =============================================================================
+
+# 数据预处理
+data_mis <- filter(data_filtered, Matching == 'Nonmatching', RT_ms >= 200, RT_ms <= 5000)
+data_RT_mis <- filter(data_mis, ACC == 1)
+
+# 运行完整分析
+print("开始运行分析...")
+results <- run_complete_analysis(data_mis, data_RT_mis)
+```
+

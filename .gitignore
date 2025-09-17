@@ -2,30 +2,24 @@
 .Rproj.user
 .Rhistory
 .RData
-Clean_Data(Draft).Rmd
 
 # files
 Contact*.xlsx
 
 # Datasets
 Datasets/
+
 /2_Raw_Data/Zhang_2023_NI
 2_Raw_Data/Zhang_2022_NI/Zhang_2022_NI_Exp1_raw.csv
+2_Raw_Data/Sun_2025/Sun_2025.csv
+2_Raw_Data/Sun_2025/Sun_2025_Exp1_raw.csv
 
-Bukowski_2021_AP/
-Golubickis_2021_AP/
-Hobbs_2023_PM/
-Mcivor_2020_EJN/
-Orellana-Corrales_2021_EP/
-
-Svensson_2021_PR/
-Wang_2016_EPHPP/
+4_Reports/Processed_Data_Filtered.csv
 
 
 # 忽略所有子目录和文件
 **/.DS_Store
 **/Thumbs.db
-
 
 
 # Office temp Files
@@ -49,20 +43,33 @@ desktop.ini
 *.run.xml
 *.synctex.gz
 
-/2_Literature_Search/2_1_All_Papers
+
 /1_Clean_Data/Kirk_2025_BJP
-/1_Clean_Data/Svensson_2023_QJEP
 /2_Raw_Data/Kirk_2025_BJP
+
+/1_Clean_Data/Svensson_2023_QJEP
 /2_Raw_Data/Svensson_2023_QJEP
-/2_Raw_Data/Orellana-Corrales_2021_APP
+
 /2_Raw_Data/Lee_2023_Cognition
 /1_Clean_Data/Lee_2023_Cognition
+
 /2_Raw_Data/Hobbs_2021_PM
+
+/2_Raw_Data/Orellana-Corrales_2021_APP
 /1_Clean_Data/Orellana-Corrales_2021_APP
+
 /2_Raw_Data/Haciahmet_2022_Psy
 /1_Clean_Data/Haciahmet_2022_Psy
+
 /2_Raw_Data/Smith_2024_Cortex
 /1_Clean_Data/Smith_2024_Cortex
-2_Raw_Data/Sun_2025/Sun_2025.csv
-2_Raw_Data/Sun_2025/Sun_2025_Exp1_raw.csv
-4_Reports/Processed_Data_Filtered.csv
+
+
+
+
+Bukowski_2021_AP/
+Golubickis_2021_AP/
+Hobbs_2023_PM/
+Mcivor_2020_EJN/
+Orellana-Corrales_2021_EP/
+Svensson_2021_PR/
