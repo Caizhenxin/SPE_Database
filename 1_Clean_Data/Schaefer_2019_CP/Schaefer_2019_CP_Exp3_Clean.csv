@@ -1,4 +1,4 @@
-"Subject","Matching","Origin_Identity","English_Identity","Standarlized_Identity","RT_ms","RT_sec","ACC"
+"Subject","Matching","Shape_Origin_Identity","Shape_English_Identity","Shape_Standardized_Identity","RT_ms","RT_sec","ACC"
 1,"Matching","Mutter","Mother","Close",540,0.54,0
 1,"Nonmatching","Mutter","Mother","Close",517,0.517,0
 1,"Matching","Bekannter","Acquaintance","Acquaintance",457,0.457,1

@@ -1,4 +1,4 @@
-"Subject","Stim","Matching","Origin_Identity","English_Identity","Standarlized_Identity","Response","RT_ms","RT_sec","ACC"
+"Subject","Stim","Matching","Shape_Origin_Identity","Shape_English_Identity","Shape_Standardized_Identity","Response","RT_ms","RT_sec","ACC"
 1,1,"Matching","Self","Self","Self",1,858,0.858,1
 1,1,"Matching","Friend","Friend","Close",1,1043,1.043,1
 1,0,"Nonmatching","Stranger","Stranger","Stranger",0,931,0.931,1

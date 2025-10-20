@@ -1,4 +1,4 @@
-"Subject","Shape","Label1","Label2","Label3","Origin_Identity","English_Identity","Standarlized_Identity","Matching","Response","RT_ms","RT_sec","ACC"
+"Subject","Shape","Label1","Label2","Label3","Shape_Origin_Identity","Shape_English_Identity","Shape_Standardized_Identity","Matching","Response","RT_ms","RT_sec","ACC"
 2501,"Anna","You","Anna","none","Friend","Friend","Close","Nonmatching","m",973,0.973,1
 2501,"none","You","Anna","none","None","None","NonPerson","Nonmatching","m",761,0.761,1
 2501,"Anna","You","Anna","none","Friend","Friend","Close","Nonmatching","m",510,0.51,1

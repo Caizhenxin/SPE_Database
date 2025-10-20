@@ -1,4 +1,4 @@
-"Subject","Shape","Label1","Label2","Label3","Origin_Identity","English_Identity","Standarlized_Identity","Matching","Response","RT_ms","RT_sec","ACC"
+"Subject","Shape","Label1","Label2","Label3","Shape_Origin_Identity","Shape_English_Identity","Shape_Standardized_Identity","Matching","Response","RT_ms","RT_sec","ACC"
 1002,"none","You","none","Masha","None","None","NonPerson","Nonmatching","z",730,0.73,1
 1002,"You","You","none","Masha","Self","Self","Self","Nonmatching","z",705,0.705,1
 1002,"You","You","none","Masha","Self","Self","Self","Nonmatching","z",497,0.497,1

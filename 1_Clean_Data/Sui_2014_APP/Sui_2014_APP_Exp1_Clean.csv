@@ -1,4 +1,4 @@
-"Subject","Block","Trial","Matching","Origin_Identity","English_Identity","Standarlize_Identity","RT_ms","RT_sec","ACC"
+"Subject","Block","Trial","Matching","Shape_Origin_Identity","Shape_English_Identity","Shape_Standardized_Identity","RT_ms","RT_sec","ACC"
 1,1,1,"Nonmatching","mother","Mother","Close",487,0.487,1
 1,1,2,"Nonmatching","stranger","Stranger","Stranger",614,0.614,1
 1,1,3,"Nonmatching","self","Self","Self",481,0.481,1

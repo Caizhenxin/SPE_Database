@@ -28,15 +28,15 @@ dataPath <- "../1_Clean_Data"
 data_files <- list.files(path = dataPath, pattern = ".*_Clean\\.csv$", full.names = TRUE, recursive = TRUE)
 
 ## 需要排除的文件夹
-exclude_folders <- c("Bukowski_2021_AP", "Golubickis_2021_AP", 
-                     "Hobbs_2023_PM", "Mcivor_2020_EJN", 
-                     "Orellana-Corrales_2021_EP", "Svensson_2021_PR", 
-                     "Wang_2016_EPHPP","Liang_2022_HBM","Hobbs_2021_PM",
-                     "Lee_2023_Cognition","Orellana-Corrales_2021_APP",
-                     "Kirk_2025_BJP","Svensson_2023_QJEP")
+# exclude_folders <- c("Bukowski_2021_AP", "Golubickis_2021_AP", 
+#                      "Hobbs_2023_PM", "Mcivor_2020_EJN", 
+#                      "Orellana-Corrales_2021_EP", "Svensson_2021_PR", 
+#                      "Hobbs_2021_PM",
+#                      "Lee_2023_Cognition","Orellana-Corrales_2021_APP",
+#                      "Kirk_2025_BJP","Svensson_2023_QJEP")
 
 ## 过滤掉不需要的文件
-data_files <- data_files[!grepl(paste(exclude_folders, collapse = "|"), data_files)]
+# data_files <- data_files[!grepl(paste(exclude_folders, collapse = "|"), data_files)]
 
 ## 预分配存储变量（列表存储数据）
 results_list <- list()
@@ -52,7 +52,7 @@ for (i in seq_along(data_files)) {
     mutate(across(where(is.character), as.character))  # 确保字符变量类型一致
   
   # 确保数据包含所需变量
-  if (all(c("RT_ms", "ACC", "Label", "Standarlized_Identity", "Subject", "Matching") %in% names(Data))) {
+  if (all(c("RT_ms", "ACC", "Label_Identity", "Subject", "Matching") %in% names(Data))) {
     
     # 生成唯一标识每篇文章的 Subject ID，并添加 Source 变量
     Data <- Data %>%
@@ -67,7 +67,7 @@ for (i in seq_along(data_files)) {
 
     # **存入列表**
     results_list[[counter]] <- Data %>%
-      select(Source, Subject, Matching, Label, Standarlized_Identity, RT_ms, ACC)  # **保留 Source 变量**
+      select(Source, Subject, Matching, Label_Identity, RT_ms, ACC)  # **保留 Source 变量**
     
     counter <- counter + 1
   }
@@ -86,6 +86,149 @@ print("数据处理完成，已存入 `results` 变量")
 save(df,results,results_list,file = "Share_Data.RData", compress = TRUE)
 load("Share_Data.RData")
 ```
+# v2
+```{r}
+library(dplyr)
+library(readr)
+
+## 设置数据路径
+dataPath <- "../1_Clean_Data"
+data_files <- list.files(path = dataPath, pattern = ".*_Clean\\.csv$", full.names = TRUE, recursive = TRUE)
+
+## 预分配存储变量（列表存储数据）
+results_list <- list()
+
+## 计数器
+counter <- 1
+
+## 读取 CSV 文件并处理数据
+for (i in seq_along(data_files)) {
+  file_name <- basename(data_files[i])  # 提取文件名（假设文件名代表文章名称）
+  
+  Data <- read_csv(data_files[i], show_col_types = FALSE) %>%
+    mutate(across(where(is.character), as.character))  # 确保字符变量类型一致
+  
+  # 确保数据包含所需变量
+  if (all(c("RT_ms", "ACC", "Subject", "Matching") %in% names(Data))) {
+    
+    # 生成唯一标识每篇文章的 Subject ID，并添加 Source 变量
+    Data <- Data %>%
+      mutate(
+        Subject = paste0(file_name, "_", Subject),
+        Source = file_name  # **新增变量，标记来源文章**
+      )
+
+    # **存入列表**
+    results_list[[counter]] <- Data %>%
+      select(Source, Subject, Matching, RT_ms, ACC)  # **保留 Source 变量**
+    
+    counter <- counter + 1
+  }
+  print(paste('完成数据集', i, '处理'))
+}
+
+# **合并所有数据**
+results <- bind_rows(results_list)
+
+# **检查合并后的数据**
+print("数据处理完成，已存入 `results` 变量")
+
+# **输出数据到 CSV**
+# write.csv(results, "Processed_Data.csv", row.names = FALSE)
+
+save(df,results,results_list,file = "Share_Data.RData", compress = TRUE)
+load("Share_Data.RData")
+```
+# v3
+```{r}
+library(dplyr)
+library(readr)
+
+## 设置数据路径
+dataPath <- "../1_Clean_Data"
+data_files <- list.files(path = dataPath, pattern = ".*_Clean\\.csv$", full.names = TRUE, recursive = TRUE)
+
+## 预分配存储变量（列表存储数据）
+results_list <- list()
+
+## 计数器
+counter <- 1
+
+## 首先收集所有文件的变量名，确定总变量集合
+all_vars <- c()
+for (file in data_files) {
+  cols <- read_csv(file, n_max = 0, show_col_types = FALSE) %>% names()
+  all_vars <- unique(c(all_vars, cols))
+}
+
+# 确保核心变量在总变量集中
+core_vars <- c("RT_ms", "ACC", "Subject", "Matching")
+all_vars <- unique(c(all_vars, core_vars, "Source"))  # 加入Source变量
+
+## 读取CSV文件并处理数据
+for (i in seq_along(data_files)) {
+  file_name <- basename(data_files[i])
+  
+  # 读取数据并处理字符变量
+  Data <- read_csv(data_files[i], show_col_types = FALSE) %>%
+    mutate(across(where(is.character), as.character))
+  
+  # 检查是否包含核心变量
+  if (all(core_vars %in% names(Data))) {
+    
+    # 生成唯一被试ID并添加来源标识
+    Data <- Data %>%
+      mutate(
+        Subject = paste0(file_name, "_", Subject),
+        Source = file_name
+      )
+    
+    # 关键修复：统一所有变量类型为字符型（避免类型冲突）
+    # 核心数值变量后续可再转回去，先保证合并成功
+    Data <- Data %>% mutate(across(everything(), as.character))
+    
+    # 填充缺失变量
+    missing_vars <- setdiff(all_vars, names(Data))
+    if (length(missing_vars) > 0) {
+      Data[missing_vars] <- "\\"
+    }
+    
+    # 按总变量集顺序选取列
+    Data_processed <- Data %>%
+      select(all_of(all_vars))
+    
+    results_list[[counter]] <- Data_processed
+    counter <- counter + 1
+  } else {
+    warning(paste("文件", file_name, "缺少核心变量，已跳过"))
+  }
+  print(paste('完成数据集', i, '处理'))
+}
+
+# 合并所有数据
+if (length(results_list) > 0) {
+  results <- bind_rows(results_list)
+  
+  # 可选：将核心数值变量转回数值型（根据需要调整）
+  results <- results %>%
+    mutate(
+      RT_ms = as.numeric(RT_ms),
+      ACC = as.numeric(ACC)
+      # 如需其他变量转数值，可在此添加
+    )
+  
+  print(paste("数据处理完成，共合并", length(results_list), "个有效数据集"))
+  print(paste("总变量数：", length(all_vars)))
+} else {
+  stop("没有找到符合要求的有效数据集")
+}
+
+# 输出数据
+# write.csv(results, "Processed_Data.csv", row.names = FALSE, na = "\\")
+save(results, results_list, all_vars, file = "Share_Data.RData", compress = TRUE)
+```
+
+
 
 ```{r}
 library(dplyr)
@@ -250,9 +393,9 @@ results_list <- list()
 for (i in seq_along(data_files)) {
   file_name <- basename(data_files[i])
   
-  # 读取时指定列类型，确保 Label 列为字符型
+  #读取时指定列类型，确保 Label 列为字符型
   Data <- read_csv(data_files[i], show_col_types = FALSE,
-                   col_types = cols(Label = col_character())) %>% 
+                   col_types = cols(Label = col_character())) %>%
     mutate(across(where(is.character), as.character))
   
   # 确保数据包含所需变量
@@ -290,6 +433,16 @@ glimpse(results)
 save(results, results_list, file = "Share_Data.RData")
 ```
 
+```{r}
+unique_subjects <- unique(results$Subject)
+num_subjects <- length(unique_subjects)
+
+unique_Paper <- unique(results$Source)
+num_Paper <- length(unique_Paper)
+
+print(num_subjects)
+print(num_Paper)
+```
 
 
 # 论文数量、实验数量、被试数

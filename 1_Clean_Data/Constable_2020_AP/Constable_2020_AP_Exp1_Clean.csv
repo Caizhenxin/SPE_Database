@@ -1,4 +1,4 @@
-"Subject","Block","Trial","StrangerShape","P1Shape","P2Shape","Shape","Label","Matching","Label_Identity","Origin_Identity","ShapeLoc","Response","RT_ms","RT_sec","ACC","Phase"
+"Subject","Block","Trial","StrangerShape","P1Shape","P2Shape","Shape","Label","Matching","Label_Origin_Identity","Shape_Origin_Identity","ShapeLoc","Response","RT_ms","RT_sec","ACC","Phase"
 1,1,1,"STAR","TRIANGLE","PENTAGON","Stranger","P2","Nonmatching","P2","Stranger","Top","o",716.866949,0.716866949,1,1
 1,1,2,"STAR","TRIANGLE","PENTAGON","P1","P1","Matching","P1","P1","Top","w",566.84565,0.56684565,1,1
 1,1,3,"STAR","TRIANGLE","PENTAGON","P1","P1","Matching","P1","P1","Top","w",550.16666,0.55016666,1,1

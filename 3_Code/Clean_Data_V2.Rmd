@@ -1348,7 +1348,7 @@ df[[21]] <- read.csv(
     ACC = Target.ACC,
     Block = BlockList.Sample,
     Trial = SubTrial,
-    Trial_Type = PracList.Sample,
+    Phase = PracList.Sample,
   ) %>%
   dplyr::mutate(
     Matching = case_when(
@@ -1374,8 +1374,8 @@ df[[21]] <- read.csv(
       English_Identity == "Self" ~ "Self",
       English_Identity == "Stranger" ~ "Stranger",
     ),
-    Trial_Type = case_when(
-      Trial_Type == "1" ~ "Practice",
+    Phase = case_when(
+      Phase == "1" ~ "Practice",
       TRUE ~ "Formal",
     ),
     RT_ms = as.numeric(RT),
@@ -1392,7 +1392,7 @@ df[[21]] <- read.csv(
   ) %>%
   dplyr::select(
     Subject,  
-    Block, Trial, Trial_Type, Shape, Label, Morality, Matching, 
+    Block, Trial, Phase, Shape, Label, Morality, Matching, 
     Label_Identity, Origin_Identity, English_Identity, Standarlized_Identity, RT_ms, RT_sec, ACC
   ) %>%
   dplyr::arrange(
@@ -2233,7 +2233,7 @@ df[[33]] <- read.csv(
     Subject = Subject,
     Block = Trial,
     Trial = SubTrial,
-    Trial_type = Running.SubTrial.,
+    Phase = Running.SubTrial.,
     Origin_Identity = Target,
     Shape = TargetImage,
     Label = LabelText,
@@ -2263,7 +2263,8 @@ df[[33]] <- read.csv(
     Label_Identity = case_when(
       Label == "Ich" ~ "Self",
       Label == "Fremder" ~ "Stranger",
-    )
+    ),
+    
     ) %>%
   dplyr::mutate(
     as.numeric(as.character(RT_ms)),
@@ -2430,7 +2431,7 @@ df[[36]] <- read.csv(
     Subject = Subject,
     Block = Testphase.Cycle,
     Trial = Testphase.Sample,
-    #Trial_Type = Running.SubTrial.,
+
 
     Happyshapeother = Happyshapeother,
     Happyshapeself = Happyshapeself,

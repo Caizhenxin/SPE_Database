@@ -1,4 +1,4 @@
-"Subject","Shape","Label","Matching","Origin_Identity","English_Identity","Standarlized_Identity","RT_ms","RT_sec","ACC"
+"Subject","Shape","Label","Matching","Shape_Origin_Identity","Shape_English_Identity","Shape_Standardized_Identity","RT_ms","RT_sec","ACC"
 1,"Dreieck.png","Quadrat.png","Matching","Mutter","Mother","Close",1899,1.899,0
 1,"Quadrat.png","Kreuz.png","Nonmatching","none","none","NonPerson",1282,1.282,1
 1,"Kreis.png","Quadrat.png","Nonmatching","Mutter","Mother","Close",1358,1.358,1

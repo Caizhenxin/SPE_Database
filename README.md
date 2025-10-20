@@ -2,7 +2,7 @@
 
 This project was inspired by [the Confidence Database](https://doi.org/10.1038/s41562-019-0813-1). We aimed at curating a database that include trial-level data and other meta-data from as many empirical studies that used self-matching task from [Sui, He, &amp; Humphreys (2012)](http://www.ncbi.nlm.nih.gov/pubmed/22963229). `<!-- OSF, preprint, and publication links will be directly added to this paragraph -->`
 
-Currently, the SPE database includes trial-level data from **23 published papers**, covering **38 experiments** and **2175 participants** in total. Each dataset includes information on reaction times (RTs), accuracy (ACC), and other information reported in papers. Participants in these included studies come from diverse cultural backgrounds, facilitating cross-study comparisons and meta-analytic investigations.
+Currently, the SPE database includes trial-level data from **44 papers**, covering **70 datasets** and **3603 participants** in total. Each dataset includes information on reaction times (RTs), accuracy (ACC), and other information reported in papers. Participants in these included studies come from diverse cultural backgrounds, facilitating cross-study comparisons and meta-analytic investigations.
 
 The SPE Database is continuously updated as new studies and datasets become available. We welcome contributions from researchers who wish to share their data and help expand this resource. If you are interested in contributing or collaborating, please feel free to reach out!
 
@@ -11,6 +11,7 @@ This project is in parallel with an on-going preregistered meta-analysis leading
 ## Leading Team
 
 - Zhenxin Cai (School of Psychology, Nanjing Normal University,email:[czx@nnu.edu.cn](czx@nnu.edu.cn))
+- Wang Qihui(School of Psychology, Nanjing Normal University,email:QAQbigWang@163.com.)
 - Xinru Sun (School of Psychology, Nanjing Normal University)
 - Wanke Pan (School of Psychology, Nanjing Normal University)
 - Mengzheng Hu (School of Psychology, Nanjing Normal University)
@@ -66,6 +67,14 @@ Contributors
 
 ## Data Version
 
+### Version 0.1.3 — 2025-10-20
+
+**New features/changes**
+
+* **[Data Filtering]**: Using R, retaining behavioral variables required for calculating the Self-Prioritization Effect (SPE), including Matching, Shape/Face/Voice, Label, Identity (Shape_Origin_Identity,Shape_English_Identity,Shape_Standardized_Identity,Label_Origin_Identity,Label_English_Identity,Label_Standardized_Identity standardized as: NonPerson, Self, Close, Acquaintance, Celebrity, Stranger), RT_ms, and ACC. Demographic variables (e.g., gender, age, handedness) were also retained when available.
+
+* **[Floder Structure]**: The database is bifurcated into two primary folders: "Clean_Data" and "Raw_Data." The "Clean_Data" folder encompasses micpreprocessed data files, whereas the "Raw_Data" folder houses the original data files sourced from the articles. Within the Clean_Data folder, a JSON file has been added to document the paper's infromation, and a codebook has been included to provide a detailed account of the dataset's contents. Additionally, a codebook is present to meticulously log the data descriptions of the dataset.
+
 ### Version 0.1.2 — 2025-06-16
 
 **New features/changes**
@@ -99,7 +108,6 @@ Contributors
 
 **Planned**
 
-* **[Label_Identity Cleanup]**: Re-clean the Label_Identity variable from the raw data for more accurate classification.
 * **[Metadata in JSON Format]**: Transition metadata storage from .md to .json format for each article, providing a more structured and machine-readable format.
 
 ## Folder structure
@@ -112,11 +120,12 @@ root
 ├─1_Clean_Data 
 │   └─ <Author>_<Year>_<Journal>
 │       └─ <Author>_<Year>_<Journal>_<Exp-id>_Clean.csv
+│       └─ <Author>_<Year>_<Journal>_<Exp-id>_raw_Subject.csv
 │       └─ Codebook_<Author>_<Year>_<Journal>_<Exp-id>_Clean.xlsx
+│       └─ <Author>_<Year>_<Journal>.json  # Including 'Authors'、'Citation'、'Participants'、'Procedure'、'Data Files'.
 ├─2_Raw_Data # raw data will be stored on OSF
 │   └─ <Author>_<Year>_<Journal>
 │       └─ <Author>_<Year>_<Journal>_<Exp-id>_raw.csv
-│       └─ Readme.md  # Including 'Authors'、'Citation'、'Participants'、'Procedure'、'Data Files'.
 ├─3_Code
 │   └─ Clean_Data.Rproj
 │   └─ Clean_Data.Rmd
