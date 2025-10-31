@@ -117,20 +117,18 @@ root
 │  .gitignore
 │  README.md
 │  Dataset_inf.xlsx  
-├─1_Clean_Data 
+├─1_Data 
 │   └─ <Author>_<Year>_<Journal>
 │       └─ <Author>_<Year>_<Journal>_<Exp-id>_Clean.csv
 │       └─ <Author>_<Year>_<Journal>_<Exp-id>_raw_Subject.csv
 │       └─ Codebook_<Author>_<Year>_<Journal>_<Exp-id>_Clean.xlsx
 │       └─ <Author>_<Year>_<Journal>.json  # Including 'Authors'、'Citation'、'Participants'、'Procedure'、'Data Files'.
-├─2_Raw_Data # raw data will be stored on OSF
-│   └─ <Author>_<Year>_<Journal>
 │       └─ <Author>_<Year>_<Journal>_<Exp-id>_raw.csv
-├─3_Code
+├─2_Code
 │   └─ Clean_Data.Rproj
 │   └─ Clean_Data.Rmd
 │   └─ README.md
-└─4_Reports
+└─3_Reports
      │
      └─ README.md
 ```
