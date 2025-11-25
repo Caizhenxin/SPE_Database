@@ -1,0 +1,30 @@
+{
+  "exp1": {
+    "table": {
+      "Collected Date": "/",
+      "Location": "University of Trier, Germany",
+      "Setting": "Laboratory/Controlled environment",
+      "Modality": "Visual",
+      "Fixation size": "/",
+      "Shape size": "2.2 cm × 2.2 cm",
+      "Label size": "0.5 cm (Courier New font)",
+      "Stimulus order": "Simultaneously (Shape above, label below)",
+      "Shape-label interval": "0 ms (simultaneous presentation)",
+      "Stimulus color": "Shapes: Gray; Labels: White",
+      "Background color": "Black",
+      "Equipment for presenting": "Computer screen (Eizo S1911, 19 inches, 1280 × 1024)",
+      "Monitor properties": "19 inches, 1280 × 1024 resolution",
+      "Software for experiment": "E-Prime (v2.0, Psychology Software Tools)",
+      "Viewing distance": "60 cm",
+      "Fixation presentation duration": "Minimum 1.5 s (maximum until eye tracker confirmed fixation)",
+      "Stimulus presentation duration": "100 ms",
+      "Response deadline": "1.5 s",
+      "ITI": "/",
+      "Feedback duration": "0.5 s (practice trials only)",
+      "Number of practice trials": "24",
+      "Block number": "4 blocks",
+      "Trial Number": "240 total trials (120 matching, 120 non-matching; 60 self, 60 stranger each)"
+    },
+    "detail": ""
+  }
+}

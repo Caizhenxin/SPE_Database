@@ -1,0 +1,30 @@
+{
+  "exp1": {
+    "table": {
+      "Collected Date": "/",
+      "Location": "/",
+      "Setting": "Dimly lit room",
+      "Modality": "Visual",
+      "Fixation size": "/",
+      "Shape size": "10-cm circular area (~10° visual angle), dots diameter = 0.4 cm (~0.4°)",
+      "Label size": "Height 0.5 cm (Arial font)",
+      "Stimulus order": "Simultaneously",
+      "Shape-label interval": "0 ms",
+      "Stimulus color": "White dots, black labels",
+      "Background color": "Grey",
+      "Equipment for presenting": "Computer",
+      "Monitor properties": "15.5'' screen",
+      "Software for experiment": "PsychoPy3",
+      "Viewing distance": "About 57 cm",
+      "Fixation presentation duration": "500 ms",
+      "Stimulus presentation duration": "100 ms",
+      "Response deadline": "1500 ms",
+      "ITI": "/",
+      "Feedback duration": "500 ms",
+      "Number of practice trials": "24 per block",
+      "Block number": "2 blocks",
+      "Trial Number": "240 trials per block"
+    },
+    "detail": ""
+  }
+}

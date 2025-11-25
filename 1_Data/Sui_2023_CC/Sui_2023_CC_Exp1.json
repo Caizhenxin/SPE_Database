@@ -1,0 +1,30 @@
+{
+  "exp1": {
+    "table": {
+      "Collected Date": "/",
+      "Location": "Laboratory",
+      "Setting": "Laboratory, individual testing sessions",
+      "Modality": "EEG, Visual",
+      "Fixation size": "0.8° × 0.8°",
+      "Shape size": "3.8° × 3.8°",
+      "Label size": "3.1°/3.6° × 1.6° (You, Friend, Stranger)",
+      "Stimulus order": "Simultaneously",
+      "Shape-label interval": "0 ms",
+      "Stimulus color": "White",
+      "Background color": "Grey",
+      "Equipment for presenting": "PC",
+      "Monitor properties": "15\" CRT monitor",
+      "Software for experiment": "/",
+      "Viewing distance": "/",
+      "Fixation presentation duration": "500 ms",
+      "Stimulus presentation duration": "100 ms",
+      "Response deadline": "1.1 s",
+      "ITI": "0-400 ms (varied)",
+      "Feedback duration": "500 ms",
+      "Number of practice trials": "12",
+      "Block number": "16 blocks",
+      "Trial Number": "960 total trials (160 per condition)"
+    },
+    "detail": ""
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "exp1": {
+    "table": {
+      "Collected Date": "August 2021",
+      "Location": "Online (UK residents)",
+      "Setting": "Online (participants' own devices)",
+      "Modality": "Visual",
+      "Fixation size": "/",
+      "Shape size": "Not applicable",
+      "Label size": "/",
+      "Stimulus order": "Face first, then label",
+      "Shape-label interval": "1000 ms",
+      "Stimulus color": "/",
+      "Background color": "/",
+      "Equipment for presenting": "Participants' own laptops/desktop computers",
+      "Monitor properties": "/",
+      "Software for experiment": "Gorilla Experiment Builder",
+      "Viewing distance": "/",
+      "Fixation presentation duration": "400 ms",
+      "Stimulus presentation duration": "Face: 800 ms; Label: until response",
+      "Response deadline": "/",
+      "ITI": "/",
+      "Feedback duration": "/",
+      "Number of practice trials": "Practice trial administered (exact number not specified)",
+      "Block number": "/",
+      "Trial Number": "64 trials total"
+    },
+    "detail": ""
+  }
+}

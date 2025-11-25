@@ -1,0 +1,30 @@
+{
+  "exp1": {
+    "table": {
+      "Collected Date": "/",
+      "Location": "Department of Psychology, School of Social Sciences, Tsinghua University, Beijing, China",
+      "Setting": "Laboratory setting",
+      "Modality": "Visual",
+      "Fixation size": "0.8° × 0.8° (white fixation cross)",
+      "Shape size": "3.8° × 3.8° (six geometric shapes)",
+      "Label size": "2.4° × 1.6° (words \"You\", \"Friend\", \"Stranger\")",
+      "Stimulus order": "Simultaneously",
+      "Shape-label interval": "0 ms (simultaneous presentation)",
+      "Stimulus color": "White",
+      "Background color": "Gray",
+      "Equipment for presenting": "PC",
+      "Monitor properties": "17-inch monitor (1,024 × 768 at 60 Hz)",
+      "Software for experiment": "E-prime software (Version 2.0)",
+      "Viewing distance": "57 cm",
+      "Fixation presentation duration": "500 ms",
+      "Stimulus presentation duration": "100 ms",
+      "Response deadline": "1,100-1,300 ms (variable blank screen response window)",
+      "ITI": "/",
+      "Feedback duration": "500 ms",
+      "Number of practice trials": "Criterion-based (six consecutive correct trials)",
+      "Block number": "6 blocks",
+      "Trial Number": "60 trials per block (360 total trials)"
+    },
+    "detail": ""
+  }
+}

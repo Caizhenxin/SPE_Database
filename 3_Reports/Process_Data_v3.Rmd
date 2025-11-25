@@ -145,7 +145,7 @@ library(dplyr)
 library(readr)
 
 ## 设置数据路径
-dataPath <- "../1_Clean_Data"
+dataPath <- "../1_Data"
 data_files <- list.files(path = dataPath, pattern = ".*_Clean\\.csv$", full.names = TRUE, recursive = TRUE)
 
 ## 预分配存储变量（列表存储数据）
@@ -229,13 +229,12 @@ save(results, results_list, all_vars, file = "Share_Data.RData", compress = TRUE
 ```
 
 
-
 ```{r}
 library(dplyr)
 library(readr)
 
 ## 设置数据路径
-dataPath <- "../1_Clean_Data"
+dataPath <- "../1_Data"
 data_files <- list.files(path = dataPath, pattern = ".*_Clean\\.csv$", full.names = TRUE, recursive = TRUE)
 
 ## 需要排除的文件夹
@@ -722,6 +721,7 @@ ggplot(stim_summary, aes(
   )
 
 ```
+
 #### Treemap
 ```{r}
 # 加载包
@@ -779,7 +779,6 @@ ggplot(stim_summary, aes(
   )
 
 ```
-
 
 ```{r}
 library(ggplot2)

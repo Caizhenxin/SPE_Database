@@ -1,0 +1,30 @@
+{
+  "exp1": {
+    "table": {
+      "Collected Date": "/",
+      "Location": "Not mentioned (Participants received supermarket vouchers in HUF, suggesting Hungary)",
+      "Setting": "Laboratory setting",
+      "Modality": "Visual",
+      "Fixation size": "1.4° X 1.4° VA",
+      "Shape size": "5° X 3.5° VA (Facial expression stimuli)",
+      "Label size": "Height: 1.4° VA",
+      "Stimulus order": "Simultaneously",
+      "Shape-label interval": "0 ms",
+      "Stimulus color": "Black text labels; Facial expressions (presumed natural color)",
+      "Background color": "Grey (169 cd/m²)",
+      "Equipment for presenting": "Computer",
+      "Monitor properties": "Spatial resolution: 1920X1080; Refresh rate: 60 Hz",
+      "Software for experiment": "/",
+      "Viewing distance": "Average of 57 cm",
+      "Fixation presentation duration": "500 ms",
+      "Stimulus presentation duration": "233 ms",
+      "Response deadline": "1500 ms (after stimulus offset)",
+      "ITI": "Variable, 500–800 ms",
+      "Feedback duration": "500 ms",
+      "Number of practice trials": "4 trials (training session)",
+      "Block number": "4 blocks",
+      "Trial Number": "384 trials total (96 per block)"
+    },
+    "detail": ""
+  }
+}

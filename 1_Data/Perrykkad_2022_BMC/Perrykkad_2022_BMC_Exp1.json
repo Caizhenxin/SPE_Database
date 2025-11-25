@@ -1,0 +1,30 @@
+{
+  "exp1": {
+    "table": {
+      "Collected Date": "June 26 to July 30, 2020",
+      "Location": "Online (Amazon Mechanical Turk via Cloud Research)",
+      "Setting": "Online/Remote",
+      "Modality": "Visual",
+      "Fixation size": "/",
+      "Shape size": "/",
+      "Label size": "/",
+      "Stimulus order": "Simultaneously",
+      "Shape-label interval": "0 ms",
+      "Stimulus color": "White",
+      "Background color": "Grey",
+      "Equipment for presenting": "/",
+      "Monitor properties": "/",
+      "Software for experiment": "Inquisit Web",
+      "Viewing distance": "/",
+      "Fixation presentation duration": "500 ms",
+      "Stimulus presentation duration": "100 ms",
+      "Response deadline": "800-1200 ms (random window)",
+      "ITI": "/",
+      "Feedback duration": "/",
+      "Number of practice trials": "/",
+      "Block number": "3 blocks",
+      "Trial Number": "360 trials total (120 per block)"
+    },
+    "detail": ""
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "exp1": {
+    "table": {
+      "Collected Date": "/",
+      "Location": "/",
+      "Setting": "Laboratory setting outside MRI scanner",
+      "Modality": "Visual perceptual matching task",
+      "Fixation size": "0.8°×0.8° visual angle",
+      "Shape size": "3.8°×3.8° visual angle",
+      "Label size": "2.4°×1.6° visual angle",
+      "Stimulus order": "Shape above fixation, label below fixation",
+      "Shape-label interval": "0 ms",
+      "Stimulus color": "/",
+      "Background color": "Gray",
+      "Equipment for presenting": "PC",
+      "Monitor properties": "17-inch monitor (1024 ×768 at 60 Hz)",
+      "Software for experiment": "E-prime software (version 2.0)",
+      "Viewing distance": "/",
+      "Fixation presentation duration": "500 ms",
+      "Stimulus presentation duration": "100 ms",
+      "Response deadline": "1100 ms",
+      "ITI": "/",
+      "Feedback duration": "500 ms",
+      "Number of practice trials": "12",
+      "Block number": "/",
+      "Trial Number": "96 trials (24 per condition: self-matching, self-mismatching, stranger-matching, stranger-mismatching)"
+    },
+    "detail": ""
+  }
+}

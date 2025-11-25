@@ -1,0 +1,30 @@
+{
+  "exp1": {
+    "table": {
+      "Collected Date": "/",
+      "Location": "Tsinghua University (testing room)",
+      "Setting": "Individual testing in a quiet room",
+      "Modality": "Visual",
+      "Fixation size": "0.8° × 0.8° visual angle",
+      "Shape size": "3.7° × 3.7° visual angle",
+      "Label size": "3.6° × 1.6° visual angle",
+      "Stimulus order": "Simultaneously (shape above, label below fixation)",
+      "Shape-label interval": "0 ms",
+      "Stimulus color": "White",
+      "Background color": "Grey",
+      "Equipment for presenting": "PC",
+      "Monitor properties": "22-inch CRT monitor, 1024 × 768 resolution, 100Hz",
+      "Software for experiment": "Matlab 2016a with PsychToolbox-3",
+      "Viewing distance": "/",
+      "Fixation presentation duration": "/",
+      "Stimulus presentation duration": "100 ms (matching task), 200 ms (categorization task)",
+      "Response deadline": "/",
+      "ITI": "/",
+      "Feedback duration": "/",
+      "Number of practice trials": "48 (matching task)",
+      "Block number": "2 blocks (matching task), 6 blocks (categorization task)",
+      "Trial Number": "120 trials per block (matching), 144 trials per block (categorization)"
+    },
+    "detail": ""
+  }
+}

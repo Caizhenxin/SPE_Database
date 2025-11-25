@@ -1,4 +1,4 @@
-"Subject","Matching","Shape_Origin_Identity","Shape_English_Identity","Shape_Standardized_Identity","Mood","Arouse","Valence","Session","RT_ms","RT_sec","ACC"
+"Subject","Matching","Shape_Origin_Identity","Shape_English_Identity","Shape_Standardized_Identity","Mood","Arouse","Valence","Condition","RT_ms","RT_sec","ACC"
 17,"Nonmatching","Self","Self","Self","anxious",7,3,"S2",408,0.408,1
 17,"Nonmatching","Familiar","Familiar","Celebrity","anxious",7,3,"S2",375,0.375,1
 17,"Nonmatching","Familiar","Familiar","Celebrity","anxious",7,3,"S2",339,0.339,1

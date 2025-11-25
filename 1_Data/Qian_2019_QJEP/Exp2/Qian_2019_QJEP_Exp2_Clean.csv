@@ -1,4 +1,4 @@
-"Subject","Matching","Shape_Origin_Identity","Shape_English_Identity","Shape_Standardized_Identity","Cue","RT_ms","RT_sec","ACC"
+"Subject","Matching","Shape_Origin_Identity","Shape_English_Identity","Shape_Standardized_Identity","Condition","RT_ms","RT_sec","ACC"
 1,"Matching","Self","Self","Self","Alter cue",493,0.493,1
 1,"Matching","Self","Self","Self","No cue",316,0.316,1
 1,"Nonmatching","Familiar","Familiar","Celebrity","Alter cue",427,0.427,1
